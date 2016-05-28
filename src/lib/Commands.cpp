@@ -309,6 +309,7 @@ bool logValuesCallback(Object* o, void* data, const container_id* id, const cont
 	DataOut& out = *(DataOut*)data;
 	if (enter && isLoggedValue(o)) {
 		Value* r = (Value*)o;
+		out.write(1);					// ID of "read command"
 		writeID(id, out);
 		out.write(r->typeID());
 		out.write(r->streamSize());
@@ -321,13 +322,23 @@ void Commands::logValuesImpl(container_id* ids, DataOut& out) {
 	walkRoot(systemProfile.rootContainer(), logValuesCallback, NULL, ids);
 }
 
+const uint8_t LOG_FLAGS_IDCHAIN = 1<<0;
+const uint8_t LOG_FLAGS_SYSTEM_CONTAINER = 1<<1;
+
+/**
+ * Logs the values in the object identified.
+ * The flags allow either system or user root to be used, and an optional ID chain to walk the container hierarchy.
+ */
 void Commands::logValuesCommandHandler(DataIn& in, DataOut& out) {
 	uint8_t flags = in.next();
-    // read the ID into a buffer
-    container_id ids[MAX_CONTAINER_DEPTH];
 
-    if (systemProfile.rootContainer()) {
-		if (flags & 1)  {
+    Container* root = (flags & LOG_FLAGS_SYSTEM_CONTAINER) ? systemProfile.systemContainer() : systemProfile.rootContainer();
+
+    bool success = false;
+    if (root) {
+	    // read the ID into a buffer (also used for iterating the container hierarchy.)
+	    container_id ids[MAX_CONTAINER_DEPTH];
+		if (flags & LOG_FLAGS_IDCHAIN)  {
 			uint8_t idx = 0;
 			uint8_t id;
 			do
@@ -339,12 +350,21 @@ void Commands::logValuesCommandHandler(DataIn& in, DataOut& out) {
 			BufferDataIn buffer(ids);
 
 			Object* source = lookupUserObject(systemProfile.rootContainer(), buffer);
-			walkObject(source, logValuesCallback, &out, ids, ids+idx);
+			if (source) {
+				success = true;
+				out.write(0);		// success
+				walkObject(source, logValuesCallback, &out, ids, ids+idx);
+			}
 		}
 		else {
+			success = true;
+			out.write(0);
 			walkContainer(systemProfile.rootContainer(), logValuesCallback, &out, ids, ids);
 		}
-    }
+	}
+
+    if (!success)
+    		out.write(uint8_t(-1));
 }
 
 void Commands::resetCommandHandler(DataIn& in, DataOut& out) {
