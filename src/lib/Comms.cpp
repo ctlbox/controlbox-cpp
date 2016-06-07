@@ -204,14 +204,14 @@ cb_static_decl(NetworkConnections connections;)
 /**
  * A std::function that fetches the corresponding DataOut interface from a connection.
  */
-template <typename D>
-struct ConnectionToDataOut : public std::function<DataOut&(Connection<D>&)>
+template <typename T>
+struct ConnectionToDataOut : public std::function<DataOut&(T&)>
 {
-    typedef typename std::function<DataOut&(Connection<D>&)> base_type;
+    typedef typename std::function<DataOut&(T&)> base_type;
     typedef typename base_type::result_type result_type;
     typedef typename base_type::argument_type argument_type;
 
-    auto operator()(argument_type connection) const -> result_type {
+    inline auto operator()(argument_type connection) const -> result_type {
         return connection.getDataOut();
     }
 };
@@ -231,10 +231,12 @@ struct ConnectionToDataIn : public std::function<DataIn&(Connection<D>&)>
     }
 };
 
+cb_static_decl(typedef std::array<CommsConnection<StandardConnectionDataType>,1> CommsConnections;)
+
 /**
  * The comms connection.
  */
-cb_static_decl(std::array<CommsConnection<StandardConnectionDataType>,1> commsConnections;)
+cb_static_decl(CommsConnections commsConnections;)
 
 template<typename C>
 bool isDisconnected(C& connection)
@@ -280,14 +282,13 @@ void manageConnection()
 /**
  * A standard function that converts a connection to a pointer.
  */
-template <typename T>
-struct ConnectionAsReference : public std::function<StandardConnection&(T&)>
+struct ConnectionAsReference : public std::function<StandardConnection&(StandardConnection&)>
 {
-    typedef typename std::function<StandardConnection&(T)> base_type;
+    typedef typename std::function<StandardConnection&(StandardConnection&)> base_type;
     typedef typename base_type::result_type result_type;
     typedef typename base_type::argument_type argument_type;
 
-    StandardConnection& operator()(T& connection) const {
+    StandardConnection& operator()(StandardConnection& connection) const {
         return connection;
     }
 };
@@ -307,25 +308,21 @@ inline auto as_connection_ptr(T& source) -> decltype(boost::adaptors::transform(
 #if CONTROLBOX_STATIC
 // determine the global list of connections
 
-#ifdef SPARK
-auto all_connections() -> boost::range::joined_range<
-        boost::range_detail::transformed_range<ConnectionAsReference<CommsConnection<StandardConnectionDataType> >, decltype(commsConnections) >,
-        boost::range_detail::transformed_range<ConnectionAsReference<TCPConnection>, decltype(connections)> >
+#if defined(SPARK)
+auto all_connections() -> boost::range::joined_range<boost::range_detail::transformed_range<ConnectionAsReference, std::array<CommsConnection<StandardConnectionDataType>, 1u> >, boost::range_detail::transformed_range<ConnectionAsReference, std::vector<AbstractStreamValueConnection<TCPClient, StandardConnectionDataType> > > >
 {
-    auto first = boost::adaptors::transform(commsConnections, ConnectionAsReference<CommsConnection<StandardConnectionDataType>>());
-    auto second = boost::adaptors::transform(connections, ConnectionAsReference<TCPConnection>());
+    auto first = boost::adaptors::transform(commsConnections, ConnectionAsReference());
 
+    auto second = boost::adaptors::transform(connections, ConnectionAsReference());
     auto result = boost::join(first, second);
     return result;
 }
 #else
-auto all_connections() -> boost::range_detail::transformed_range<ConnectionAsReference<CommsConnection<StandardConnectionDataType> >, decltype(commsConnections) >
+auto all_connections() -> decltype(boost::adaptors::transform(commsConnections, ConnectionAsReference()))
 {
-	 auto first = boost::adaptors::transform(commsConnections, ConnectionAsReference<CommsConnection<StandardConnectionDataType>>());
-	 return first;
+    return boost::adaptors::transform(commsConnections, ConnectionAsReference());
 }
-#endif	// SPARK
-
+#endif
 
 /**
  * Iterator type that transforms all connections using a given transformation functor.
@@ -337,21 +334,34 @@ using ConnectionTransformIterator = typename decltype(boost::adaptors::transform
  *
  */
 template <typename TransformFunctor>
-auto fetch_streams() -> boost::iterator_range<typename decltype(boost::adaptors::transform(all_connections(), TransformFunctor()))::iterator>
+// was auto fetch_streams() -> boost::iterator_range<typename decltype(boost::adaptors::transform(all_connections(), TransformFunctor()))::iterator>
+// but this causes arm gcc 5.2 to segfault during linking
+auto fetch_streams() -> decltype(boost::adaptors::transform(all_connections(), TransformFunctor()))
 {
     return boost::adaptors::transform(all_connections(), TransformFunctor());
 }
 
-using ToDataOutFunctor = ConnectionToDataOut<StandardConnectionDataType>;
+/**
+ * Converts connections to a DataOut reference.
+ */
+using ToDataOutFunctor = ConnectionToDataOut<StandardConnection>;
+
+/**
+ *
+ */
 using CompositeDatOutType = CompositeDataOut<ConnectionTransformIterator<ToDataOutFunctor>>;
-CompositeDatOutType compositeOut(&fetch_streams<ToDataOutFunctor>);
+/**
+ * A composite
+ */
+CompositeDatOutType compositeOut(fetch_streams<ToDataOutFunctor>);
 
-
+#if 0
 void f()
 {
     std::function<boost::iterator_range<ConnectionTransformIterator<ToDataOutFunctor>>()> streams = fetch_streams<ToDataOutFunctor>;
     CompositeDatOutType compositeOut(streams);
 }
+#endif
 
 // using ToDataInFunctor = ConnectionToDataIn<StandardConnectionDataType>;
 // using CompositeDatInType = CompositeDataIn<ConnectionTransformIterator<ToDataInFunctor>>;
@@ -564,4 +574,3 @@ void Comms::receive()
 		cmd_callback(handleReset(true));					// do the hard reset
 	}
 }
-
