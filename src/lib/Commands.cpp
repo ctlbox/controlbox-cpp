@@ -33,7 +33,7 @@ void Commands::noopCommandHandler(DataIn& _in, DataOut& out)
 	while (_in.hasNext()) { _in.next(); }
 }
 
-bool checkType(uint8_t typeID, Value* value) {
+bool checkType(uint8_t& typeID, Value* value) {
 	return !typeID || value->typeID()==typeID;
 }
 
@@ -42,9 +42,10 @@ void readValue(Object* root, DataIn& in, DataOut& out) {
 	uint8_t typeID = in.next();
 	uint8_t available = in.next();			// number of bytes expected
 	Value* v = (Value*)o;
-	uint8_t expected;
-	if (isValue(o) && ((expected=v->readStreamSize())==available || available==0) && checkType(typeID, v)) {
-		out.write(expected);
+	uint8_t expectedSize;
+	if (isValue(o) && ((expectedSize=v->readStreamSize())==available || available==0) && checkType(typeID, v)) {
+		out.write(v->typeID());
+		out.write(expectedSize);
 		v->readTo(out);
 	}
 	else {								// not a readable object, flag as 0 length
@@ -75,6 +76,7 @@ void setValue(Object* root, DataIn& in, DataIn& mask, DataOut& out) {
 	uint8_t expected;
 	if (isWritable(o) && ((expected=v->writeStreamSize())==available || expected==0) && checkType(typeID, v)) {		// if it's writable and the correct number of bytes were parsed.
 		v->writeMaskedFrom(in, mask);									// assign from stream
+		out.write(v->typeID());
 		out.write(v->readStreamSize());							// now write out actual value
 		v->readTo(out);
 	}
@@ -258,6 +260,8 @@ void Commands::deleteObjectCommandHandler(DataIn& in, DataOut& out)
  */
 void Commands::listObjectsCommandHandler(DataIn& _in, DataOut& out)
 {
+	// todo - perhaps profile ID -1 could mean list the system container
+    // todo - how to flag an invalid profile (currently no results)
 	profile_id_t profile = _in.next();
 	systemProfile.listEepromInstructionsTo(profile, out);
 }
@@ -411,6 +415,11 @@ CommandHandler Commands::handlers[] = {
 	&Commands::setMaskValueCommandHandler,		// 0x11
 	&Commands::setSystemMaskValueCommandHandler // 0x12
 };
+
+// todo - there are pairs of commands that affect system or user objects
+// would be good if these differed only by 1-bit.
+// todo - a way to list the objects in the system profile
+
 
 /*
  * Processes the command request from a data stream.
