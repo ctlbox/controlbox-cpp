@@ -364,7 +364,7 @@ Command response::
 
     0x04    delete object command id
     id+     variable length id chain that specifies the id of the object to delete
-    status  zero or greater on success indicating the object was successfully deleted.
+    status  the type id of the object (0 or greater) on success indicating the object was successfully deleted.
             A negative value on error. (These values may later be defined error codes.)
 
 

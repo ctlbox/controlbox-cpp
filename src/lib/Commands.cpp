@@ -232,9 +232,11 @@ void Commands::removeEepromCreateCommand(BufferDataOut& id) {
 uint8_t Commands::deleteObject(DataIn& id) {
 	int8_t lastID;
 	uint8_t error = -1;
-	OpenContainer* obj = lookupUserOpenContainer(systemProfile.rootContainer(), id, lastID);	// find the container and the ID in the chain to remove
-	if (obj && lastID>=0 && lastID<obj->size()) {
-		obj->remove(lastID);
+	OpenContainer* container = lookupUserOpenContainer(systemProfile.rootContainer(), id, lastID);	// find the container and the ID in the chain to remove
+	if (container && lastID>=0 && lastID<container->size()) {
+		Object* target = container->item(lastID);
+		error = target ? target->typeID() : 0;
+		container->remove(lastID);
 		error = 0;
 	}
 	return error;
