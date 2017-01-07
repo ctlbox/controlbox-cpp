@@ -382,6 +382,7 @@ Command response::
 
     0x05    list profile command id
     profile_id  the profile listed
+    status      <0 on error
     repeat
         0x03    create object command id
         id+     variable length id chain

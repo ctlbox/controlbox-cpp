@@ -97,6 +97,8 @@ public:
 	 */
 	virtual obj_type_t typeID() { return _typeID; }
 
+	void setTypeID(obj_type_t type) { _typeID = type; }
+
 	/**
 	 * Notifies this object that it has been created and is operational in the system.
 	 * The eeprom address that contains the object's definition is provided for instances
@@ -526,5 +528,11 @@ Object* lookupUserObject(Container* root, DataIn& data);
  * Read the id chain from the stream and resolve the container and the final index.
  */
 OpenContainer* lookupUserOpenContainer(Container* root, DataIn& data, int8_t& lastID);
+
+/**
+ * Fetches the object at the given id, and retrieves the last ID.
+ */
+Object* lookupObject(Object* current, DataIn& data, int8_t& lastID);
+
 
 int16_t read2BytesFrom(Value* value);
