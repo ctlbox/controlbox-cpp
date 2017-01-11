@@ -46,7 +46,8 @@ bool walkObject(Object* obj, EnumObjectsFn callback, void* data, container_id* i
 		return true;
 
 	if (isContainer(obj)) {
-		*end++ |= 0x80;		// flag as not last element in id chain
+		*end = container_id(*end | 0x80);		// flag as not last element in id chain
+		end++;
 		walkContainer((Container*)obj, callback, data, id, end);
 		*--end &= 0x7F;		// remove last bit
 	}

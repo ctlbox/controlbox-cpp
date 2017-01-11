@@ -200,7 +200,7 @@ int8_t Commands::rehydrateObject(eptr_t offset, PipeDataIn& in, bool dryRun)
         // skip object create command, type and id.
         offset++; // skip creation id
         while (int8_t(eepromAccess.readByte(offset++))<0) {}	// skip contianer
-		offset+=2;												// skip object type and length
+		offset++; offset++;											// skip object type and length
         newObject->rehydrated(offset);
     }
 	else {

@@ -87,8 +87,8 @@ eptr_t readPointer(EepromAccess& eepromAccess, eptr_t address) {
 }
 
 void writePointer(EepromAccess& eepromAccess, eptr_t address, eptr_t v) {
-	eepromAccess.writeByte(address, v>>8);
-	eepromAccess.writeByte(address+1, v&0xFF);
+	eepromAccess.writeByte(address, uint8_t(v>>8));
+	eepromAccess.writeByte(eptr_t(address+1), uint8_t(v&0xFF));
 }
 
 inline void writeEepromRange(EepromAccess& eepromAccess, eptr_t start, eptr_t end, uint8_t data) {
@@ -234,7 +234,7 @@ profile_id_t SystemProfile::deleteProfile(profile_id_t profile) {
 	for (profile_id_t i=-1; i<MAX_SYSTEM_PROFILES; i++) {
 		eptr_t e = getProfileOffset(i);
 		if (e>=end) {    // profile is above the one just deleted
-			setProfileOffset(i, e-(end-start));
+			setProfileOffset(i, eptr_t(e-(end-start)));
 		}
 	}
 
@@ -333,7 +333,7 @@ void SystemProfile::profileWriteRegion(EepromStreamRegion& region, bool includeO
 	if (current>=0) {
 		eptr_t offset = getProfileEnd(current);
 		eptr_t end = getProfileEnd(current, includeOpen);
-		region.reset(offset, end-offset);
+		region.reset(offset, eptr_t(end-offset));
 	}
 	else {
 		region.reset(0,0);
@@ -348,7 +348,7 @@ void SystemProfile::profileReadRegion(profile_id_t profile, EepromStreamRegion& 
 	if (profile>=0 && profile<MAX_SYSTEM_PROFILES) {
 		eptr_t offset = getProfileOffset(profile);
 		eptr_t end = getProfileEnd(profile, false);
-		region.reset(offset, end-offset);
+		region.reset(offset, eptr_t(end-offset));
 	}
 	else {
 		region.reset(0,0);
@@ -411,7 +411,7 @@ bool ObjectDefinitionWalker::writeNext(DataOut& out) {
 	uint8_t next = _in->peek();
 	bool valid =  ((next&0x7F)==Commands::CMD_CREATE_OBJECT);
 	if (valid) {
-		PipeDataIn pipe(*_in, next<0 ? blackhole : out);	// next<0 if command not fully completed, so output is discarded
+		PipeDataIn pipe(*_in, out);
 		pipe.next();										// fetch the next value already peek'ed at so this is written to the output stream
 		/*Object* target = */lookupUserObject(_commands.rootContainer(), pipe);			// find the container where the object will be added
 		// todo - could flag warning if target is NULL

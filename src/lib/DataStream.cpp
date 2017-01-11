@@ -57,6 +57,6 @@ void readPlatformEndianMaskedBytes(void* _data, uint8_t size, DataIn& in, DataIn
 	{
 		uint8_t d = in.next();
 		uint8_t m = mask.next();
-		data[i] = (d&m) | (data[i] & ~m);
+		data[i] = uint8_t((d&m) | (data[i] & ~m));
 	}
 }

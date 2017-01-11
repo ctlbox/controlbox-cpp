@@ -34,7 +34,7 @@ public:
 #endif
 
 	int16_t difference() {
-		return int16_t(readPointer(eepromAccess, eeprom_offset()+2));
+		return int16_t(readPointer(eepromAccess, eptr_t(eeprom_offset()+2)));
 	}
 
 	int16_t savedValue() {

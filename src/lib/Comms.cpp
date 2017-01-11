@@ -407,10 +407,11 @@ bool isHexadecimalDigit(char c)
 /**
  * Fetches the next significant data byte from the stream.
  * Sets hasData and data.
- * @param set to true if more data is optional, true if data is expected and should be waited for.
+ * @param set to true if more data is optional, false if data is expected and should be waited for.
  */
-void TextIn::fetchNextData(bool optional) {
-    optional = !inLine;
+void TextIn::fetchNextData(bool /*optional*/) {
+    //optional = !inLine;
+	// todo - review the optional flag - it's unimplemented
 	while (commentLevel>=0 && !hasData && (_in->hasNext())) {
 		if (_in->available()) {
 			data = 0xFF;

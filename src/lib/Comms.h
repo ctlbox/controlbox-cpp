@@ -300,10 +300,11 @@ public:
 /**
  * Converts a hex digit to the corresponding binary value.
  */
-inline uint8_t h2d(unsigned char hex)
+inline uint8_t h2d(uint8_t hex)
 {
-	if (hex > '9')
-		hex -= (unsigned char)7; // 'A' is 0x41, 'a' is 0x61. -7 =  0x3A, 0x5A
+	if (hex > '9') {
+		hex = uint8_t(hex + 7); // 'A' is 0x41, 'a' is 0x61. -7 =  0x3A, 0x5A
+	}
 	return uint8_t(hex & 0xf);
 }
 
