@@ -37,8 +37,6 @@ bool checkType(uint8_t& typeID, Value* value) {
 	return !typeID || value->typeID()==typeID;
 }
 
-static_assert(sizeof(invalid_id)==2, "expected 2");
-
 void readValue(Object* root, DataIn& in, DataOut& out) {
 	Object* o = lookupObject(root, in);		// read the object and pipe read data to output
 	uint8_t typeID = in.next();
@@ -332,7 +330,9 @@ void Commands::listObjectsCommandHandler(DataIn& _in, DataOut& out)
 	// todo - perhaps profile ID -1 could mean list the system container
     // todo - how to flag an invalid profile (currently no results)
 	profile_id_t profile = profile_id_t(_in.next());
+	out.write(0)	;	// status. TODO: check that the profile ID is valid
 	systemProfile.listEepromInstructionsTo(profile, out);
+	out.write(0);	// list terminator
 }
 
 
@@ -443,12 +443,14 @@ void Commands::logValuesCommandHandler(DataIn& in, DataOut& out) {
 				error = errorCode(no_error);
 				out.write(0);		// success
 				walkObject(source, logValuesCallback, &out, ids, ids+idx);
+				out.write(0);		// list terminator
 			}
 		}
 		else {
 			error = errorCode(no_error);
 			out.write(0);
 			walkContainer(root, logValuesCallback, &out, ids, ids);
+			out.write(0);		// list terminator
 		}
 	}
     if (error<0) {
