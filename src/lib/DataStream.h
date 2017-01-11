@@ -234,7 +234,7 @@ public:
 	: in(&_in), len(_len) {}
 
 	bool hasNext() override { return len && in->hasNext(); }
-	uint8_t next() override { return hasNext() ? len--, in->next() : 0; }
+	uint8_t next() override { return hasNext() ? len--, in->next() : uint8_t(0); }
 	uint8_t peek() override { return in->peek(); }
 	unsigned available() override { return std::min(unsigned(len), in->available()); }
 

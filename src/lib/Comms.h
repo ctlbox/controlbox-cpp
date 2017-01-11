@@ -303,7 +303,7 @@ public:
 inline uint8_t h2d(unsigned char hex)
 {
 	if (hex > '9')
-		hex -= 7; // 'A' is 0x41, 'a' is 0x61. -7 =  0x3A, 0x5A
+		hex -= (unsigned char)7; // 'A' is 0x41, 'a' is 0x61. -7 =  0x3A, 0x5A
 	return uint8_t(hex & 0xf);
 }
 

@@ -145,7 +145,7 @@ private:
 
 	void fetchTarget() {
 		EepromDataIn data cb_nonstatic_decl((eepromAccess));
-		data.reset(address, eepromAccess.readByte(address-1));
+		data.reset(address, eepromAccess.readByte(eptr_t(address-1)));
 		previous = (Value*)lookupUserObject(root(), data);
 	}
 public:
@@ -165,7 +165,7 @@ public:
 
 	object_t objectType() {
 		fetchTarget();
-		return previous==NULL ? ObjectFlags::Object : previous->objectType();
+		return previous==NULL ? object_t(ObjectFlags::Object) : previous->objectType();
 	}
 
 	prepare_t prepare() {

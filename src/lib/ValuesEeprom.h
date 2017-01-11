@@ -59,7 +59,7 @@ protected:
 	 */
 	void _writeMaskedFrom(DataIn& dataIn, DataIn& maskIn, uint8_t length,
                                                         eptr_t address) {
-		while (--length>=0) {
+		while (length --> 0) {
 			uint8_t current = eepromAccess.readByte(address);
 			uint8_t update = WritableValue::nextMaskedByte(current, dataIn, maskIn);
 			eepromAccess.writeByte(address++, update);
@@ -105,7 +105,7 @@ public:
 	}
 
 	eptr_t eeprom_offset() { return address; }
-	uint8_t readStreamSize() { return eepromAccess.readByte(address-1); }
+	uint8_t readStreamSize() { return eepromAccess.readByte(eptr_t(address-1)); }
 
 	static Object* create(ObjectDefinition& defn)
 	{

@@ -31,8 +31,14 @@ const container_id INVALID_ID = (container_id)(-1);
 
 typedef uint16_t prepare_t;
 
+/**
+ * System flags for an object type. Objects are classified as
+ * containers, open containers, readable, writable.
+ */
+typedef uint8_t object_t;
+
 namespace ObjectFlags {
-enum Enum {
+enum Enum : object_t {
 	Object = 0,
 	Value = 4,			// 0x000001xx are for value types. Base value type is stream only readable.
 	ValueWrite = 5,		// value is writable (either state and/or stream as indicated.)
@@ -47,11 +53,7 @@ enum Enum {
 };
 }
 
-/**
- * System flags for an object type. Objects are classified as
- * containers, open containers, readable, writable.
- */
-typedef uint8_t object_t;
+static_assert(sizeof(ObjectFlags::Enum)<=sizeof(object_t), "ObjectFlags::Enum must be no wider than object_t");
 
 /**
  * Application defined type id. The maximum value is 127.
@@ -240,7 +242,7 @@ public:
 	static uint8_t nextMaskedByte(uint8_t current, DataIn& dataIn, DataIn& maskIn) {
 			uint8_t next = dataIn.next();
 			uint8_t mask = maskIn.next();
-			return (next & mask) | (current & ~mask);
+			return uint8_t(((next & mask) | (current & ~mask)));
 	}
 };
 
@@ -257,7 +259,7 @@ public:
 	}
 
 	eptr_t eeprom_offset() { return address; }
-	uint8_t readStreamSize(cb_nonstatic_decl(EepromAccess& eepromAccess)) { return eepromAccess.readByte(address-1); }
+	uint8_t readStreamSize(cb_nonstatic_decl(EepromAccess& eepromAccess)) { return eepromAccess.readByte(eptr_t(address-1)); }
 
 };
 
