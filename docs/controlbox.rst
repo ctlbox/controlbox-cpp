@@ -160,22 +160,21 @@ This prevents the profile from being loaded.
 System Objects
 ^^^^^^^^^^^^^^
 Regular user-space objects are stored with a profile and created/removed by the user. In contrast, system objects
-are not bound to any profile but to the controller itself. These system objects are created by the controller.
-Most are typically read only with only a few being writable in some cases.
+are not bound to any profile but to the controller itself. These system objects are created by the controller
+application.
 
-Like user objects, system objects are readable and writable. However, system objects cannot be created or destroyed.
+Like user objects, system objects are readable and writable. However, system objects cannot be created or destroyed
+via the command interface. Rather they are only created and destoyed by the controller firmware.
 
 The commands associated with system objects are:
  - read system object
  - write system object
- - list system objects ?? (Not sure if this is needed.)
+ - list system object values
+ - list system object configuration (optional)
 
 These commands operate similarly to their corresponding user object commands, but they use the system
 object container as their starting point.
 
-The system objects are provided outside of the container hierarchy.
-Despite the name (which will probably change!) they are provided by the application.
-System objects cannot be created nor deleted via the command interface.
 
 Comms Interface Format
 ----------------------
@@ -311,9 +310,11 @@ Create Object Command
 ^^^^^^^^^^^^^^^^^^^^^
 Creates a new object and places it at a specific location, specified by the id chain. Note that the system does not
 automatically delete any object that is at that slot, and so the caller should ensure the slot is empty or the system
-will have a memory leak - the old object will be still in memory, but no longer reclaimable since it's pointer has been
-overwritten. Slots returned by the "next free slot" command are guaranteed empty, so this is only a concern when
-deliberately overwriting an existing slot.
+will potentially have two definitions for the same slot. Slots returned by the "next free slot" command are guaranteed
+empty, so this is only a concern when deliberately overwriting an existing slot.
+
+The object definition is persisted to the profile. The object will be recreated
+when the controller is restarted and the profile is active.
 
 Command request::
 
